@@ -35,7 +35,7 @@ class StatCard extends StatelessWidget {
               children: [
                 PremiumIconBox(icon: icon, color: color, size: 38),
                 if (onTap != null)
-                  Icon(Icons.arrow_forward_ios_rounded,
+                  const Icon(Icons.arrow_forward_ios_rounded,
                       size: 14, color: AppColors.neutral400),
               ],
             ),

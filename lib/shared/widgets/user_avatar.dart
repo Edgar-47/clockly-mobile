@@ -23,8 +23,8 @@ class UserAvatar extends StatelessWidget {
       height: size,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: bgColor.withOpacity(0.13),
-        border: Border.all(color: bgColor.withOpacity(0.16)),
+        color: bgColor.withValues(alpha: 0.13),
+        border: Border.all(color: bgColor.withValues(alpha: 0.16)),
       ),
       child: CircleAvatar(
         radius: size / 2,

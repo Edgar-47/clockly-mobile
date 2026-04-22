@@ -88,7 +88,7 @@ class _DashboardBody extends StatelessWidget {
               ],
               if (metrics.employeeHours.isNotEmpty) ...[
                 const SizedBox(height: AppSpacing.x2),
-                PremiumSectionHeader(
+                const PremiumSectionHeader(
                   title: 'Equipo este mes',
                   subtitle: 'Empleados con más horas registradas',
                   inverse: true,
@@ -138,7 +138,7 @@ class _DashboardHeader extends StatelessWidget {
               Text(
                 businessName,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Colors.white.withOpacity(0.58),
+                      color: Colors.white.withValues(alpha: 0.58),
                     ),
                 overflow: TextOverflow.ellipsis,
               ),
@@ -259,7 +259,7 @@ class _QuickActions extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        PremiumSectionHeader(
+        const PremiumSectionHeader(
           title: 'Accesos rápidos',
           subtitle: 'Gestión mobile-first',
           inverse: true,
@@ -362,7 +362,7 @@ class _PendingTicketsCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return PremiumCard(
       color: AppColors.amberSoft,
-      borderColor: AppColors.amber.withOpacity(0.24),
+      borderColor: AppColors.amber.withValues(alpha: 0.24),
       onTap: () => context.push('/tickets'),
       child: Row(
         children: [

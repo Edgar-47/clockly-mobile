@@ -84,7 +84,12 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/tickets/:id',
             builder: (_, state) {
-              final id = int.parse(state.pathParameters['id']!);
+              final id = int.tryParse(state.pathParameters['id'] ?? '');
+              if (id == null) {
+                return const Scaffold(
+                  body: Center(child: Text('Ticket no válido')),
+                );
+              }
               return TicketDetailScreen(ticketId: id);
             },
           ),

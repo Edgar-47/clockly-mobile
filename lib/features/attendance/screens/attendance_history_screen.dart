@@ -293,7 +293,7 @@ class _HistoryHeader extends StatelessWidget {
               Text(
                 'Sesiones, cierres e incidencias',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Colors.white.withOpacity(0.58),
+                      color: Colors.white.withValues(alpha: 0.58),
                     ),
               ),
             ],
@@ -302,7 +302,7 @@ class _HistoryHeader extends StatelessWidget {
         IconButton.filled(
           onPressed: onFilter,
           style: IconButton.styleFrom(
-            backgroundColor: Colors.white.withOpacity(0.08),
+            backgroundColor: Colors.white.withValues(alpha: 0.08),
             foregroundColor: AppColors.paper,
           ),
           icon: const Icon(Icons.tune_rounded),
@@ -333,7 +333,7 @@ class _FilterStrip extends StatelessWidget {
           Text(
             'Periodo',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Colors.white.withOpacity(0.58),
+                  color: Colors.white.withValues(alpha: 0.58),
                 ),
           ),
           const Spacer(),

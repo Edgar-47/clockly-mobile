@@ -15,11 +15,9 @@ class TicketDetailScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(ticketsProvider).valueOrNull;
-    final ticketModel = state?.tickets.firstWhere(
-      (t) => t.id == ticketId,
-      orElse: () => state!.tickets.first,
-    );
+    final tickets = ref.watch(ticketsProvider).valueOrNull?.tickets ?? [];
+    final ticketModel =
+        tickets.where((t) => t.id == ticketId).firstOrNull;
 
     if (ticketModel == null) {
       return Scaffold(
@@ -124,7 +122,7 @@ class TicketDetailScreen extends ConsumerWidget {
               decoration: BoxDecoration(
                 color: AppColors.infoLight,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.info.withOpacity(0.3)),
+                border: Border.all(color: AppColors.info.withValues(alpha: 0.3)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -186,7 +184,7 @@ class _StatusChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.12),
+        color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Text(label,

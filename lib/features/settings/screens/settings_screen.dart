@@ -158,7 +158,7 @@ class _SettingsHeader extends StatelessWidget {
               Text(
                 'Cuenta, negocio y ajustes',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Colors.white.withOpacity(0.58),
+                      color: Colors.white.withValues(alpha: 0.58),
                     ),
               ),
             ],
@@ -257,7 +257,7 @@ class _SettingsTile extends StatelessWidget {
         onTap: onTap,
         color: destructive ? AppColors.roseSoft : AppColors.card,
         borderColor:
-            destructive ? AppColors.rose.withOpacity(0.22) : AppColors.neutral200,
+            destructive ? AppColors.rose.withValues(alpha: 0.22) : AppColors.neutral200,
         child: Row(
           children: [
             PremiumIconBox(icon: icon, color: color, size: 40),

@@ -6,7 +6,6 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/date_utils.dart';
-import '../../../shared/extensions/context_extensions.dart';
 import '../../../shared/widgets/brand_logo.dart';
 import '../../attendance/providers/attendance_provider.dart';
 
@@ -200,13 +199,13 @@ class _KioskIdle extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
             decoration: BoxDecoration(
               color: messageIsError
-                  ? AppColors.error.withOpacity(0.2)
-                  : AppColors.success.withOpacity(0.2),
+                  ? AppColors.error.withValues(alpha: 0.2)
+                  : AppColors.success.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
                 color: messageIsError
-                    ? AppColors.error.withOpacity(0.5)
-                    : AppColors.success.withOpacity(0.5),
+                    ? AppColors.error.withValues(alpha: 0.5)
+                    : AppColors.success.withValues(alpha: 0.5),
               ),
             ),
             child: Text(
@@ -230,7 +229,7 @@ class _KioskIdle extends StatelessWidget {
               borderRadius: BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(
-                  color: actionColor.withOpacity(0.4),
+                  color: actionColor.withValues(alpha: 0.4),
                   blurRadius: 30,
                   offset: const Offset(0, 8),
                 )
@@ -354,7 +353,7 @@ class _NumPad extends StatelessWidget {
                       width: 64,
                       height: 64,
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.08),
+                        color: Colors.white.withValues(alpha: 0.08),
                         shape: BoxShape.circle,
                         border: Border.all(color: Colors.white12),
                       ),

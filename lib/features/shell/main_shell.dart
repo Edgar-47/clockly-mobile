@@ -112,12 +112,12 @@ class _PremiumBottomNav extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(6),
         decoration: BoxDecoration(
-          color: AppColors.paper.withOpacity(0.96),
+          color: AppColors.paper.withValues(alpha: 0.96),
           borderRadius: BorderRadius.circular(28),
-          border: Border.all(color: Colors.white.withOpacity(0.66)),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.66)),
           boxShadow: [
             BoxShadow(
-              color: AppColors.ink.withOpacity(0.28),
+              color: AppColors.ink.withValues(alpha: 0.28),
               blurRadius: 28,
               offset: const Offset(0, 14),
             ),

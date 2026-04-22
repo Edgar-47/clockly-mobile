@@ -242,7 +242,7 @@ class _EmployeesHeader extends StatelessWidget {
               Text(
                 'Personas, roles y presencia',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Colors.white.withOpacity(0.58),
+                      color: Colors.white.withValues(alpha: 0.58),
                     ),
               ),
             ],

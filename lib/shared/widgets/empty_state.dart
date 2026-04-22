@@ -29,47 +29,47 @@ class EmptyState extends StatelessWidget {
         child: PremiumCard(
           padding: const EdgeInsets.all(AppSpacing.x3),
           borderColor: AppColors.neutral200,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: AppColors.cobaltSoft,
-                shape: BoxShape.circle,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: const BoxDecoration(
+                  color: AppColors.cobaltSoft,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icon, size: 38, color: AppColors.cobalt),
               ),
-              child: Icon(icon, size: 38, color: AppColors.cobalt),
-            ),
-            const SizedBox(height: 20),
-            Text(
-              title,
-              style: Theme.of(context)
-                  .textTheme
-                  .headlineSmall
-                  ?.copyWith(fontWeight: FontWeight.w700),
-              textAlign: TextAlign.center,
-            ),
-            if (subtitle != null) ...[
-              const SizedBox(height: 8),
+              const SizedBox(height: 20),
               Text(
-                subtitle!,
+                title,
                 style: Theme.of(context)
                     .textTheme
-                    .bodyMedium
-                    ?.copyWith(color: AppColors.textSecondary),
+                    .headlineSmall
+                    ?.copyWith(fontWeight: FontWeight.w700),
                 textAlign: TextAlign.center,
               ),
+              if (subtitle != null) ...[
+                const SizedBox(height: 8),
+                Text(
+                  subtitle!,
+                  style: Theme.of(context)
+                      .textTheme
+                      .bodyMedium
+                      ?.copyWith(color: AppColors.textSecondary),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+              if (actionLabel != null && onAction != null) ...[
+                const SizedBox(height: 24),
+                AppButton(
+                  label: actionLabel!,
+                  onPressed: onAction,
+                  fullWidth: false,
+                ),
+              ],
             ],
-            if (actionLabel != null && onAction != null) ...[
-              const SizedBox(height: 24),
-              AppButton(
-                label: actionLabel!,
-                onPressed: onAction,
-                fullWidth: false,
-              ),
-            ],
-          ],
-        ),
+          ),
         ),
       ),
     );

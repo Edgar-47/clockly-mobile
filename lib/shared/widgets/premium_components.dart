@@ -49,7 +49,7 @@ class PremiumCard extends StatelessWidget {
       border: Border.all(color: borderColor ?? AppColors.neutral200),
       boxShadow: [
         BoxShadow(
-          color: AppColors.ink.withOpacity(0.08),
+          color: AppColors.ink.withValues(alpha: 0.08),
           blurRadius: 26,
           offset: const Offset(0, 14),
         ),
@@ -94,9 +94,9 @@ class GlassCard extends StatelessWidget {
     final card = Container(
       padding: padding,
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.08),
+        color: Colors.white.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(AppRadius.xl),
-        border: Border.all(color: Colors.white.withOpacity(0.12)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
       ),
       child: child,
     );
@@ -128,7 +128,7 @@ class PremiumIconBox extends StatelessWidget {
       width: size,
       height: size,
       decoration: BoxDecoration(
-        color: color.withOpacity(0.12),
+        color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(AppRadius.md),
       ),
       child: Icon(icon, color: color, size: size * 0.46),
@@ -158,9 +158,9 @@ class StatusPill extends StatelessWidget {
         vertical: compact ? 5 : 7,
       ),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.12),
+        color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(AppRadius.pill),
-        border: Border.all(color: color.withOpacity(0.16)),
+        border: Border.all(color: color.withValues(alpha: 0.16)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -201,7 +201,7 @@ class PremiumSectionHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final titleColor = inverse ? AppColors.paper : AppColors.textPrimary;
     final subtitleColor =
-        inverse ? Colors.white.withOpacity(0.62) : AppColors.textSecondary;
+        inverse ? Colors.white.withValues(alpha: 0.62) : AppColors.textSecondary;
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.end,

@@ -1,16 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import 'app_colors.dart';
 
 class AppTheme {
   AppTheme._();
 
-  static const _fontFamily = 'Inter';
-
   static ThemeData get light {
+    final interTextTheme = GoogleFonts.interTextTheme(_baseTextTheme);
+
     final base = ThemeData(
       useMaterial3: true,
-      fontFamily: _fontFamily,
+      textTheme: interTextTheme,
       colorScheme: ColorScheme.fromSeed(
         seedColor: AppColors.cobalt,
         brightness: Brightness.light,
@@ -24,19 +25,18 @@ class AppTheme {
 
     return base.copyWith(
       scaffoldBackgroundColor: AppColors.background,
-      appBarTheme: const AppBarTheme(
+      appBarTheme: AppBarTheme(
         backgroundColor: Colors.transparent,
         foregroundColor: AppColors.textPrimary,
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: false,
-        titleTextStyle: TextStyle(
-          fontFamily: _fontFamily,
+        titleTextStyle: GoogleFonts.inter(
           fontSize: 19,
           fontWeight: FontWeight.w700,
           color: AppColors.textPrimary,
         ),
-        iconTheme: IconThemeData(color: AppColors.textPrimary),
+        iconTheme: const IconThemeData(color: AppColors.textPrimary),
       ),
       cardTheme: CardThemeData(
         color: AppColors.card,
@@ -56,8 +56,7 @@ class AppTheme {
           minimumSize: const Size.fromHeight(54),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           elevation: 0,
-          textStyle: const TextStyle(
-            fontFamily: _fontFamily,
+          textStyle: GoogleFonts.inter(
             fontSize: 15,
             fontWeight: FontWeight.w700,
           ),
@@ -69,8 +68,7 @@ class AppTheme {
           minimumSize: const Size.fromHeight(54),
           side: const BorderSide(color: AppColors.cobalt),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          textStyle: const TextStyle(
-            fontFamily: _fontFamily,
+          textStyle: GoogleFonts.inter(
             fontSize: 15,
             fontWeight: FontWeight.w700,
           ),
@@ -79,8 +77,7 @@ class AppTheme {
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           foregroundColor: AppColors.cobalt,
-          textStyle: const TextStyle(
-            fontFamily: _fontFamily,
+          textStyle: GoogleFonts.inter(
             fontSize: 14,
             fontWeight: FontWeight.w700,
           ),
@@ -132,15 +129,13 @@ class AppTheme {
         }),
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
-            return const TextStyle(
-              fontFamily: _fontFamily,
+            return GoogleFonts.inter(
               fontSize: 11,
               fontWeight: FontWeight.w700,
               color: AppColors.cobalt,
             );
           }
-          return const TextStyle(
-            fontFamily: _fontFamily,
+          return GoogleFonts.inter(
             fontSize: 11,
             fontWeight: FontWeight.w600,
             color: AppColors.neutral400,
@@ -150,8 +145,7 @@ class AppTheme {
       chipTheme: ChipThemeData(
         backgroundColor: AppColors.paper2,
         selectedColor: AppColors.cobaltSoft,
-        labelStyle: const TextStyle(
-          fontFamily: _fontFamily,
+        labelStyle: GoogleFonts.inter(
           fontSize: 12,
           fontWeight: FontWeight.w700,
           color: AppColors.textSecondary,
@@ -162,106 +156,94 @@ class AppTheme {
       snackBarTheme: SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
         backgroundColor: AppColors.ink3,
-        contentTextStyle: const TextStyle(
-          fontFamily: _fontFamily,
+        contentTextStyle: GoogleFonts.inter(
           color: AppColors.paper,
           fontWeight: FontWeight.w600,
         ),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       ),
-      textTheme: const TextTheme(
-        displayLarge: TextStyle(
-          fontFamily: _fontFamily,
-          fontSize: 36,
-          fontWeight: FontWeight.w800,
-          color: AppColors.textPrimary,
-          letterSpacing: 0,
-        ),
-        displayMedium: TextStyle(
-          fontFamily: _fontFamily,
-          fontSize: 30,
-          fontWeight: FontWeight.w800,
-          color: AppColors.textPrimary,
-          letterSpacing: 0,
-        ),
-        headlineLarge: TextStyle(
-          fontFamily: _fontFamily,
-          fontSize: 26,
-          fontWeight: FontWeight.w800,
-          color: AppColors.textPrimary,
-          letterSpacing: 0,
-        ),
-        headlineMedium: TextStyle(
-          fontFamily: _fontFamily,
-          fontSize: 22,
-          fontWeight: FontWeight.w800,
-          color: AppColors.textPrimary,
-          letterSpacing: 0,
-        ),
-        headlineSmall: TextStyle(
-          fontFamily: _fontFamily,
-          fontSize: 19,
-          fontWeight: FontWeight.w800,
-          color: AppColors.textPrimary,
-          letterSpacing: 0,
-        ),
-        titleLarge: TextStyle(
-          fontFamily: _fontFamily,
-          fontSize: 17,
-          fontWeight: FontWeight.w800,
-          color: AppColors.textPrimary,
-          letterSpacing: 0,
-        ),
-        titleMedium: TextStyle(
-          fontFamily: _fontFamily,
-          fontSize: 15,
-          fontWeight: FontWeight.w700,
-          color: AppColors.textPrimary,
-          letterSpacing: 0,
-        ),
-        bodyLarge: TextStyle(
-          fontFamily: _fontFamily,
-          fontSize: 15,
-          fontWeight: FontWeight.w500,
-          color: AppColors.textPrimary,
-          letterSpacing: 0,
-        ),
-        bodyMedium: TextStyle(
-          fontFamily: _fontFamily,
-          fontSize: 14,
-          fontWeight: FontWeight.w500,
-          color: AppColors.textSecondary,
-          letterSpacing: 0,
-        ),
-        bodySmall: TextStyle(
-          fontFamily: _fontFamily,
-          fontSize: 12,
-          fontWeight: FontWeight.w500,
-          color: AppColors.textHint,
-          letterSpacing: 0,
-        ),
-        labelLarge: TextStyle(
-          fontFamily: _fontFamily,
-          fontSize: 14,
-          fontWeight: FontWeight.w800,
-          color: AppColors.textPrimary,
-          letterSpacing: 0,
-        ),
-        labelMedium: TextStyle(
-          fontFamily: _fontFamily,
-          fontSize: 12,
-          fontWeight: FontWeight.w700,
-          color: AppColors.textSecondary,
-          letterSpacing: 0,
-        ),
-        labelSmall: TextStyle(
-          fontFamily: _fontFamily,
-          fontSize: 11,
-          fontWeight: FontWeight.w700,
-          color: AppColors.textHint,
-          letterSpacing: 0,
-        ),
-      ),
+      textTheme: interTextTheme,
     );
   }
+
+  static const TextTheme _baseTextTheme = TextTheme(
+    displayLarge: TextStyle(
+      fontSize: 36,
+      fontWeight: FontWeight.w800,
+      color: AppColors.textPrimary,
+      letterSpacing: 0,
+    ),
+    displayMedium: TextStyle(
+      fontSize: 30,
+      fontWeight: FontWeight.w800,
+      color: AppColors.textPrimary,
+      letterSpacing: 0,
+    ),
+    headlineLarge: TextStyle(
+      fontSize: 26,
+      fontWeight: FontWeight.w800,
+      color: AppColors.textPrimary,
+      letterSpacing: 0,
+    ),
+    headlineMedium: TextStyle(
+      fontSize: 22,
+      fontWeight: FontWeight.w800,
+      color: AppColors.textPrimary,
+      letterSpacing: 0,
+    ),
+    headlineSmall: TextStyle(
+      fontSize: 19,
+      fontWeight: FontWeight.w800,
+      color: AppColors.textPrimary,
+      letterSpacing: 0,
+    ),
+    titleLarge: TextStyle(
+      fontSize: 17,
+      fontWeight: FontWeight.w800,
+      color: AppColors.textPrimary,
+      letterSpacing: 0,
+    ),
+    titleMedium: TextStyle(
+      fontSize: 15,
+      fontWeight: FontWeight.w700,
+      color: AppColors.textPrimary,
+      letterSpacing: 0,
+    ),
+    bodyLarge: TextStyle(
+      fontSize: 15,
+      fontWeight: FontWeight.w500,
+      color: AppColors.textPrimary,
+      letterSpacing: 0,
+    ),
+    bodyMedium: TextStyle(
+      fontSize: 14,
+      fontWeight: FontWeight.w500,
+      color: AppColors.textSecondary,
+      letterSpacing: 0,
+    ),
+    bodySmall: TextStyle(
+      fontSize: 12,
+      fontWeight: FontWeight.w500,
+      color: AppColors.textHint,
+      letterSpacing: 0,
+    ),
+    labelLarge: TextStyle(
+      fontSize: 14,
+      fontWeight: FontWeight.w800,
+      color: AppColors.textPrimary,
+      letterSpacing: 0,
+    ),
+    labelMedium: TextStyle(
+      fontSize: 12,
+      fontWeight: FontWeight.w700,
+      color: AppColors.textSecondary,
+      letterSpacing: 0,
+    ),
+    labelSmall: TextStyle(
+      fontSize: 11,
+      fontWeight: FontWeight.w700,
+      color: AppColors.textHint,
+      letterSpacing: 0,
+    ),
+  );
 }

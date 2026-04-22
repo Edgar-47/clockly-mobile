@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'package:http/http.dart' as http;
 
 import '../../core/constants/api_constants.dart';
 import '../../core/network/api_client.dart';

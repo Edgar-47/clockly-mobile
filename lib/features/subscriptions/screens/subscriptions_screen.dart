@@ -102,7 +102,7 @@ class _CurrentPlanBanner extends StatelessWidget {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [color, color.withOpacity(0.7)],
+          colors: [color, color.withValues(alpha: 0.7)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -171,7 +171,7 @@ class _PlanCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.08),
+              color: color.withValues(alpha: 0.08),
               borderRadius:
                   const BorderRadius.vertical(top: Radius.circular(15)),
             ),
@@ -209,7 +209,7 @@ class _PlanCard extends StatelessWidget {
                       Text(price,
                           style: TextStyle(
                               fontSize: 15,
-                              color: color.withOpacity(0.7),
+                              color: color.withValues(alpha: 0.7),
                               fontWeight: FontWeight.w500)),
                     ],
                   ),

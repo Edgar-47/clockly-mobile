@@ -102,7 +102,7 @@ class _BusinessHeader extends StatelessWidget {
               Text(
                 'Selecciona el contexto de trabajo',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Colors.white.withOpacity(0.58),
+                      color: Colors.white.withValues(alpha: 0.58),
                     ),
               ),
             ],

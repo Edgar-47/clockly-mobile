@@ -159,7 +159,7 @@ class _HeroHeader extends StatelessWidget {
         Text(
           'Fichajes, sesiones y registros conectados a tu negocio.',
           style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                color: Colors.white.withOpacity(0.68),
+                color: Colors.white.withValues(alpha: 0.68),
                 height: 1.4,
               ),
         ),
@@ -180,7 +180,7 @@ class _BusinessHint extends StatelessWidget {
             width: 34,
             height: 34,
             decoration: BoxDecoration(
-              color: AppColors.cobalt.withOpacity(0.22),
+              color: AppColors.cobalt.withValues(alpha: 0.22),
               borderRadius: BorderRadius.circular(12),
             ),
             child: const Icon(
@@ -194,7 +194,7 @@ class _BusinessHint extends StatelessWidget {
             child: Text(
               'El negocio activo se sincroniza automáticamente tras iniciar sesión.',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Colors.white.withOpacity(0.66),
+                    color: Colors.white.withValues(alpha: 0.66),
                     height: 1.3,
                   ),
             ),
@@ -217,7 +217,7 @@ class _ErrorBanner extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.roseSoft,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.rose.withOpacity(0.22)),
+        border: Border.all(color: AppColors.rose.withValues(alpha: 0.22)),
       ),
       child: Row(
         children: [

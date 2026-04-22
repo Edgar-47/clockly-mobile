@@ -295,7 +295,7 @@ class _TopBar extends StatelessWidget {
               Text(
                 '$businessName · $date',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Colors.white.withOpacity(0.58),
+                      color: Colors.white.withValues(alpha: 0.58),
                     ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
@@ -306,7 +306,7 @@ class _TopBar extends StatelessWidget {
         IconButton.filled(
           onPressed: onHistory,
           style: IconButton.styleFrom(
-            backgroundColor: Colors.white.withOpacity(0.08),
+            backgroundColor: Colors.white.withValues(alpha: 0.08),
             foregroundColor: AppColors.paper,
           ),
           icon: const Icon(Icons.history_rounded),
@@ -332,7 +332,7 @@ class _ClockHero extends StatelessWidget {
           Text(
             'Ahora',
             style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                  color: Colors.white.withOpacity(0.58),
+                  color: Colors.white.withValues(alpha: 0.58),
                 ),
           ),
           const SizedBox(height: AppSpacing.sm),
@@ -360,7 +360,7 @@ class _ClockHero extends StatelessWidget {
                 compact: true,
               ),
               const SizedBox(width: AppSpacing.sm),
-              StatusPill(
+              const StatusPill(
                 label: 'En directo',
                 color: AppColors.verde,
                 icon: Icons.circle_rounded,
@@ -389,15 +389,19 @@ class _StatusCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Shadow nullable fields so Dart can promote them in conditional branches.
+    final activeSession = this.activeSession;
+    final latestSession = this.latestSession;
+
     final color = isClockedIn ? AppColors.verde : AppColors.neutral500;
     final label = isClockedIn ? 'Dentro de jornada' : 'Fuera de jornada';
     final helper = isClockedIn && activeSession != null
-        ? 'Sesión activa desde ${AppDateUtils.formatTime(activeSession!.clockIn)}'
+        ? 'Sesión activa desde ${AppDateUtils.formatTime(activeSession.clockIn)}'
         : isClockedIn
             ? 'Sesión activa'
-        : latestSession != null
-            ? 'Última salida registrada'
-            : 'Listo para registrar entrada';
+            : latestSession != null
+                ? 'Última salida registrada'
+                : 'Listo para registrar entrada';
 
     return PremiumCard(
       child: Column(
@@ -436,20 +440,19 @@ class _StatusCard extends StatelessWidget {
                 Expanded(
                   child: _MiniStat(
                     label: 'Entrada',
-                    value: AppDateUtils.formatTime(activeSession!.clockIn),
+                    value: AppDateUtils.formatTime(activeSession.clockIn),
                   ),
                 ),
                 Expanded(
                   child: _MiniStat(
                     label: 'Tiempo',
-                    value:
-                        AppDateUtils.formatDuration(activeSession!.effectiveDuration),
+                    value: AppDateUtils.formatDuration(activeSession.effectiveDuration),
                   ),
                 ),
                 Expanded(
                   child: _MiniStat(
                     label: 'Método',
-                    value: activeSession!.method.label,
+                    value: activeSession.method.label,
                   ),
                 ),
               ],
@@ -468,6 +471,8 @@ class _SessionSummary extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Shadow nullable field so Dart can promote it after the null check.
+    final session = this.session;
     if (session == null) {
       return PremiumCard(
         color: AppColors.paper,
@@ -607,7 +612,7 @@ class _ClockButton extends StatelessWidget {
           borderRadius: BorderRadius.circular(24),
           boxShadow: [
             BoxShadow(
-              color: color.withOpacity(onTap == null ? 0 : 0.32),
+              color: color.withValues(alpha: onTap == null ? 0 : 0.32),
               blurRadius: 30,
               offset: const Offset(0, 15),
             ),
@@ -656,7 +661,7 @@ class _InlineError extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.roseSoft,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColors.rose.withOpacity(0.22)),
+        border: Border.all(color: AppColors.rose.withValues(alpha: 0.22)),
       ),
       child: Row(
         children: [

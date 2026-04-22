@@ -1,6 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/errors/app_exceptions.dart';
 import '../../../data/models/dashboard/dashboard_model.dart';
 import '../../../providers/app_providers.dart';
 import '../../auth/providers/auth_provider.dart';
