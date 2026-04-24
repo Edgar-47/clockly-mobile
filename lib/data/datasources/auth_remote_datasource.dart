@@ -37,6 +37,23 @@ class AuthRemoteDatasource {
     return session;
   }
 
+  /// Exchanges a refresh token for a new access token.
+  ///
+  /// TODO: Backend endpoint required — POST [ApiConstants.refreshToken]
+  ///   Request:  {"refresh_token": "<token>"}
+  ///   Response: {"access_token": "<new-token>", "refresh_token": "<new-refresh>"}
+  ///
+  /// Throws [UnauthorizedException] if the refresh token has expired.
+  Future<AuthSessionModel> refreshSession(String refreshToken) async {
+    final data = await _client.post(
+      ApiConstants.refreshToken,
+      body: {'refresh_token': refreshToken},
+    ) as Map<String, dynamic>;
+    final session = AuthSessionModel.fromJson(data);
+    _client.setAccessToken(session.accessToken);
+    return session;
+  }
+
   Future<void> logout() async {
     try {
       await _client.post(ApiConstants.logout);

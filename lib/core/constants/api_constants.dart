@@ -29,6 +29,14 @@ class ApiConstants {
   static const String login = '/auth/login';
   static const String logout = '/auth/logout';
   static const String me = '/auth/me';
+  // TODO: implement POST /auth/refresh on backend — expects {"refresh_token": "..."}
+  static const String refreshToken = '/auth/refresh';
+
+  // Kiosk
+  // TODO: implement POST /kiosk/validate-pin on backend
+  // Expected request:  {"pin": "1234", "business_id": "..."}
+  // Expected response: {"valid": true, "employee_id": 42, "employee_name": "Ana García"}
+  static const String kioskValidatePin = '/kiosk/validate-pin';
   // Switch business lives under /businesses, not /auth
   static const String switchBusiness = '/businesses/switch';
 

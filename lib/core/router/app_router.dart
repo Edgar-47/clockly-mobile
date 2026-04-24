@@ -20,6 +20,9 @@ import '../../features/subscriptions/screens/subscriptions_screen.dart';
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 final _shellNavigatorKey = GlobalKey<NavigatorState>();
 
+/// Routes that require manager-or-above role.
+const _managerRoutes = {'/dashboard', '/employees'};
+
 final routerProvider = Provider<GoRouter>((ref) {
   final authListenable = ValueNotifier<Object?>(null);
 
@@ -34,13 +37,29 @@ final routerProvider = Provider<GoRouter>((ref) {
     redirect: (context, state) {
       final auth = ref.read(authProvider).valueOrNull;
 
-      // Still initializing
+      // Still initializing — show nothing while session restores
       if (auth == null || !auth.isInitialized) return null;
 
-      final isLoginRoute = state.matchedLocation == '/login';
+      final location = state.matchedLocation;
+      final isLoginRoute = location == '/login';
 
-      if (!auth.isAuthenticated && !isLoginRoute) return '/login';
-      if (auth.isAuthenticated && isLoginRoute) return '/attendance';
+      // Not authenticated → login (except if already on login)
+      if (!auth.isAuthenticated) {
+        return isLoginRoute ? null : '/login';
+      }
+
+      // Already authenticated → skip login
+      if (isLoginRoute) return '/attendance';
+
+      // Role guard: manager-or-above routes
+      if (_managerRoutes.any((r) => location.startsWith(r))) {
+        final session = auth.session;
+        if (session != null && !session.isManagerOrAbove) {
+          // Employee trying to access admin route → redirect to attendance
+          return '/attendance';
+        }
+      }
+
       return null;
     },
     routes: [
@@ -86,9 +105,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (_, state) {
               final id = int.tryParse(state.pathParameters['id'] ?? '');
               if (id == null) {
-                return const Scaffold(
-                  body: Center(child: Text('Ticket no válido')),
-                );
+                return const _InvalidParamScreen(message: 'Ticket no válido');
               }
               return TicketDetailScreen(ticketId: id);
             },
@@ -108,10 +125,76 @@ final routerProvider = Provider<GoRouter>((ref) {
         ],
       ),
     ],
-    errorBuilder: (context, state) => Scaffold(
-      body: Center(
-        child: Text('Página no encontrada: ${state.error}'),
-      ),
-    ),
+    errorBuilder: (context, state) => _NotFoundScreen(error: state.error),
   );
 });
+
+// ---------------------------------------------------------------------------
+
+class _NotFoundScreen extends StatelessWidget {
+  const _NotFoundScreen({this.error});
+  final Exception? error;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Icon(Icons.link_off_rounded, size: 64, color: Colors.black26),
+              const SizedBox(height: 24),
+              Text(
+                'Página no encontrada',
+                style: Theme.of(context).textTheme.headlineMedium,
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'La ruta a la que intentas acceder no existe o no tienes permisos.',
+                style: Theme.of(context).textTheme.bodyMedium,
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 40),
+              FilledButton.icon(
+                onPressed: () => context.go('/attendance'),
+                icon: const Icon(Icons.home_rounded),
+                label: const Text('Ir al inicio'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _InvalidParamScreen extends StatelessWidget {
+  const _InvalidParamScreen({required this.message});
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.error_outline_rounded, size: 48, color: Colors.black26),
+            const SizedBox(height: 16),
+            Text(message, style: Theme.of(context).textTheme.bodyLarge),
+            const SizedBox(height: 24),
+            TextButton(
+              onPressed: () => context.pop(),
+              child: const Text('Volver'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

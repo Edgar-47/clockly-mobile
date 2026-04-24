@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 
+import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../shared/widgets/app_button.dart';
@@ -124,6 +126,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
                     const SizedBox(height: AppSpacing.xl),
                     const _BusinessHint(),
+                    const SizedBox(height: AppSpacing.lg),
+                    const _LegalLinks(),
                   ],
                 ),
               ),
@@ -201,6 +205,39 @@ class _BusinessHint extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _LegalLinks extends StatelessWidget {
+  const _LegalLinks();
+
+  Future<void> _open(String url) async {
+    final uri = Uri.tryParse(url);
+    if (uri != null) await launchUrl(uri, mode: LaunchMode.externalApplication);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        TextButton(
+          onPressed: () => _open(AppConstants.privacyPolicyUrl),
+          child: const Text(
+            'Privacidad',
+            style: TextStyle(color: Colors.white54, fontSize: 12),
+          ),
+        ),
+        const Text('·', style: TextStyle(color: Colors.white30)),
+        TextButton(
+          onPressed: () => _open(AppConstants.termsOfServiceUrl),
+          child: const Text(
+            'Términos',
+            style: TextStyle(color: Colors.white54, fontSize: 12),
+          ),
+        ),
+      ],
     );
   }
 }

@@ -6,6 +6,10 @@ import 'package:http/http.dart' as http;
 import '../constants/api_constants.dart';
 import '../errors/app_exceptions.dart';
 
+/// Called when a 401 is received and a token refresh should be attempted.
+/// Returns the new access token on success, or null if refresh failed.
+typedef TokenRefresher = Future<String?> Function();
+
 class ApiClient {
   ApiClient({http.Client? httpClient, int maxRetries = 1})
       : _httpClient = httpClient ?? http.Client(),
@@ -14,6 +18,10 @@ class ApiClient {
   final http.Client _httpClient;
   final int _maxRetries;
   String? _accessToken;
+
+  /// Set this callback to enable automatic token refresh on 401.
+  /// The AuthNotifier wires this up after login/restore.
+  TokenRefresher? onTokenRefresh;
 
   void setAccessToken(String? token) => _accessToken = token;
 
@@ -70,12 +78,29 @@ class ApiClient {
   Future<dynamic> _send(
     Future<http.Response> Function() call, {
     bool retryable = true,
+    bool isRetryAfterRefresh = false,
   }) async {
     int attempts = 0;
     while (true) {
       attempts++;
       try {
         final response = await call().timeout(const Duration(seconds: 30));
+
+        // 401: attempt silent token refresh once (never recurse on a refresh request)
+        if (response.statusCode == 401 && !isRetryAfterRefresh) {
+          final refresher = onTokenRefresh;
+          if (refresher != null) {
+            final newToken = await refresher();
+            if (newToken != null) {
+              setAccessToken(newToken);
+              // Retry the original request exactly once with the new token
+              return _send(call, retryable: false, isRetryAfterRefresh: true);
+            }
+          }
+          // No refresher or refresh failed — propagate 401
+          throw const UnauthorizedException();
+        }
+
         // Retry on 5xx only for safe, idempotent-ish transient errors.
         if (retryable && response.statusCode >= 500 && attempts <= _maxRetries) {
           await Future.delayed(Duration(milliseconds: 500 * attempts));
@@ -83,6 +108,7 @@ class ApiClient {
         }
         return _handleResponse(response);
       } on SocketException {
+        // Network error — NOT a session error. Do NOT clear session.
         if (retryable && attempts <= _maxRetries) {
           await Future.delayed(Duration(milliseconds: 500 * attempts));
           continue;
@@ -97,6 +123,8 @@ class ApiClient {
         throw const NetworkException('El servidor tardó demasiado en responder.');
       } on FormatException {
         throw const ServerException('Respuesta inesperada del servidor.');
+      } on AppException {
+        rethrow;
       }
     }
   }
@@ -132,10 +160,8 @@ class ApiClient {
 
   String? _extractDetail(dynamic decoded) {
     if (decoded is Map) {
-      // Backend format: {"error": {"code": "...", "message": "..."}}
       final error = decoded['error'];
       if (error is Map) return error['message']?.toString();
-      // Fallback for other formats
       return decoded['detail']?.toString() ??
           decoded['message']?.toString() ??
           decoded['non_field_errors']?.toString();

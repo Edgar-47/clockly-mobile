@@ -6,11 +6,25 @@ class AppConstants {
 
   // Session
   static const String tokenKey = 'clockly_access_token';
+  static const String refreshTokenKey = 'clockly_refresh_token';
   static const String businessIdKey = 'clockly_active_business_id';
+
+  // Legal — override at build time:
+  //   --dart-define=CLOCKLY_PRIVACY_URL=https://your-domain.com/privacy
+  static const String privacyPolicyUrl = String.fromEnvironment(
+    'CLOCKLY_PRIVACY_URL',
+    defaultValue: 'https://clockly.app/privacy',
+  );
+  static const String termsOfServiceUrl = String.fromEnvironment(
+    'CLOCKLY_TERMS_URL',
+    defaultValue: 'https://clockly.app/terms',
+  );
 
   // Kiosk
   static const int kioskPinLength = 4;
-  static const Duration kioskTimeout = Duration(minutes: 5);
+  static const Duration kioskInactivityTimeout = Duration(minutes: 3);
+  static const int kioskMaxFailedAttempts = 3;
+  static const Duration kioskLockoutDuration = Duration(seconds: 30);
 
   // Attendance
   static const Duration attendanceRefreshInterval = Duration(seconds: 30);

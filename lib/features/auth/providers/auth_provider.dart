@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/errors/app_exceptions.dart';
@@ -52,17 +53,85 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
     }
 
     client.setAccessToken(token);
+    _wireRefreshCallback();
+
     try {
       final session = await datasource.me();
       return AuthState(session: session, isInitialized: true);
     } on UnauthorizedException {
+      // Token is definitively rejected — try refresh token before giving up
+      return await _tryRefreshOrClear();
+    } on SocketException {
+      // Network unavailable at startup — keep session optimistically (offline mode)
+      return const AuthState(isInitialized: true);
+    } on NetworkException {
+      // Same: transient network error — keep session for offline use
+      return const AuthState(isInitialized: true);
+    } catch (_) {
+      return const AuthState(isInitialized: true);
+    }
+  }
+
+  /// Attempts to use the stored refresh token to get a new access token.
+  /// If refresh also fails or refresh token doesn't exist, clears the session.
+  Future<AuthState> _tryRefreshOrClear() async {
+    final storage = ref.read(secureStorageProvider);
+    final client = ref.read(apiClientProvider);
+    final datasource = ref.read(authDatasourceProvider);
+
+    final refreshToken = await storage.readRefreshToken();
+    if (refreshToken == null) {
       await storage.clear();
       client.setAccessToken(null);
       return const AuthState(isInitialized: true);
+    }
+
+    try {
+      final session = await datasource.refreshSession(refreshToken);
+      await storage.saveToken(session.accessToken);
+      // TODO: save new refresh token when backend returns it in refresh response
+      _wireRefreshCallback();
+      return AuthState(session: session, isInitialized: true);
     } catch (_) {
-      // Network error but token might be valid — keep session for offline
+      await storage.clear();
+      client.setAccessToken(null);
       return const AuthState(isInitialized: true);
     }
+  }
+
+  /// Wires the ApiClient refresh callback so 401s on API calls trigger
+  /// a silent token refresh without forcing the user to log in again.
+  void _wireRefreshCallback() {
+    final client = ref.read(apiClientProvider);
+    final storage = ref.read(secureStorageProvider);
+    final datasource = ref.read(authDatasourceProvider);
+
+    client.onTokenRefresh = () async {
+      final refreshToken = await storage.readRefreshToken();
+      if (refreshToken == null) return null;
+      try {
+        final session = await datasource.refreshSession(refreshToken);
+        await storage.saveToken(session.accessToken);
+        // Update the in-memory session state
+        final current = state.valueOrNull;
+        if (current?.session != null) {
+          state = AsyncValue.data(
+            AuthState(
+              session: session.copyWith(
+                // preserve business context from current session
+                activeBusinessId: current!.session!.activeBusinessId,
+              ),
+              isInitialized: true,
+            ),
+          );
+        }
+        return session.accessToken;
+      } catch (_) {
+        // Refresh failed — force logout
+        await logout();
+        return null;
+      }
+    };
   }
 
   Future<void> login({required String identifier, required String password}) async {
@@ -79,6 +148,11 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
       if (session.activeBusinessId != null) {
         await storage.saveActiveBusinessId(session.activeBusinessId);
       }
+      // TODO: save refresh token when backend returns it in login response
+      // if (session.refreshToken != null) {
+      //   await storage.saveRefreshToken(session.refreshToken!);
+      // }
+      _wireRefreshCallback();
       return AuthState(session: session, isInitialized: true);
     });
   }
@@ -108,6 +182,8 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
     try {
       await ref.read(authDatasourceProvider).logout();
     } catch (_) {}
+    final client = ref.read(apiClientProvider);
+    client.onTokenRefresh = null;
     await ref.read(secureStorageProvider).clear();
     state = const AsyncValue.data(AuthState(isInitialized: true));
   }

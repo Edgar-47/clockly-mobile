@@ -7,6 +7,7 @@ import '../data/datasources/attendance_remote_datasource.dart';
 import '../data/datasources/employee_remote_datasource.dart';
 import '../data/datasources/ticket_remote_datasource.dart';
 import '../data/datasources/dashboard_remote_datasource.dart';
+import '../data/datasources/kiosk_remote_datasource.dart';
 
 // Singletons — never dispose these
 final apiClientProvider = Provider<ApiClient>((ref) {
@@ -16,7 +17,7 @@ final apiClientProvider = Provider<ApiClient>((ref) {
 });
 
 final secureStorageProvider = Provider<SecureStorage>((ref) {
-  return const SecureStorage();
+  return SecureStorage();
 });
 
 // Datasources
@@ -38,4 +39,8 @@ final ticketDatasourceProvider = Provider<TicketRemoteDatasource>((ref) {
 
 final dashboardDatasourceProvider = Provider<DashboardRemoteDatasource>((ref) {
   return DashboardRemoteDatasource(ref.watch(apiClientProvider));
+});
+
+final kioskDatasourceProvider = Provider<KioskRemoteDatasource>((ref) {
+  return KioskRemoteDatasource(ref.watch(apiClientProvider));
 });

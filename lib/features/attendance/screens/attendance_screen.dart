@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -27,6 +28,8 @@ class AttendanceScreen extends ConsumerStatefulWidget {
 class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
   Timer? _ticker;
   DateTime _now = DateTime.now();
+  bool _isOnline = true;
+  StreamSubscription<List<ConnectivityResult>>? _connectivitySub;
 
   @override
   void initState() {
@@ -34,11 +37,28 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
     _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
       if (mounted) setState(() => _now = DateTime.now());
     });
+    _initConnectivity();
+  }
+
+  Future<void> _initConnectivity() async {
+    final result = await Connectivity().checkConnectivity();
+    _updateOnlineStatus(result);
+    _connectivitySub = Connectivity().onConnectivityChanged.listen(
+      _updateOnlineStatus,
+    );
+  }
+
+  void _updateOnlineStatus(List<ConnectivityResult> result) {
+    final online = result.any((r) => r != ConnectivityResult.none);
+    if (mounted && online != _isOnline) {
+      setState(() => _isOnline = online);
+    }
   }
 
   @override
   void dispose() {
     _ticker?.cancel();
+    _connectivitySub?.cancel();
     super.dispose();
   }
 
@@ -186,9 +206,40 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
 
     return Scaffold(
       body: ClocklyBackground(
-        child: SafeArea(
-          bottom: false,
-          child: asyncState.when(
+        child: Column(
+          children: [
+            if (!_isOnline)
+              Material(
+                color: Colors.orange.shade800,
+                child: const SafeArea(
+                  bottom: false,
+                  child: Padding(
+                    padding:
+                        EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    child: Row(
+                      children: [
+                        Icon(Icons.wifi_off_rounded,
+                            color: Colors.white, size: 16),
+                        SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Sin conexión — el fichaje no está disponible',
+                            style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            Expanded(
+              child: SafeArea(
+                bottom: false,
+                top: _isOnline,
+                child: asyncState.when(
             loading: () => const Center(
               child: CircularProgressIndicator(color: AppColors.cobaltLight),
             ),
@@ -197,10 +248,14 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
               onRetry: () => ref.invalidate(attendanceProvider),
             ),
             data: (state) => RefreshIndicator(
-              onRefresh: () => ref.read(attendanceProvider.notifier).refresh(),
+              onRefresh: () =>
+                  ref.read(attendanceProvider.notifier).refresh(),
               child: _buildBody(context, state, user, business?.name),
             ),
           ),
+              ),
+            ),
+          ],
         ),
       ),
     );

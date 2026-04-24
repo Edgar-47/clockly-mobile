@@ -40,6 +40,14 @@ migrate_working_dir/
 .env.*
 !.env.example
 
+# Android signing — never commit these
+*.jks
+*.keystore
+android/key.properties
+# iOS signing
+ios/Runner/GoogleService-Info.plist
+google-services.json
+
 # Symbolication related
 app.*.symbols
 

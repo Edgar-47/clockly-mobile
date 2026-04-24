@@ -1,0 +1,14 @@
+# Copy this file to android/key.properties and fill in your values.
+# NEVER commit key.properties or *.jks to version control.
+# Both are already listed in android/.gitignore.
+#
+# Generate a keystore:
+#   keytool -genkey -v -keystore clockly-release.jks \
+#     -keyalg RSA -keysize 2048 -validity 10000 \
+#     -alias clockly-key
+#
+storePassword=REPLACE_WITH_STORE_PASSWORD
+keyPassword=REPLACE_WITH_KEY_PASSWORD
+keyAlias=clockly-key
+# Path is relative to the android/app/ directory:
+storeFile=../../clockly-release.jks

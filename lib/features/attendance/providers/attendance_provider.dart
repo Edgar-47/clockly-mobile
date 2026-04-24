@@ -1,11 +1,14 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:geolocator/geolocator.dart';
 
 import '../../../core/errors/app_exceptions.dart';
 import '../../../data/models/attendance/attendance_session_model.dart';
 import '../../../domain/entities/attendance_entity.dart';
 import '../../../providers/app_providers.dart';
 import '../../auth/providers/auth_provider.dart';
+
+// GPS/location removed: the backend clockIn/clockOut schema does not accept
+// location fields. Removing geolocator eliminates an unnecessary permission
+// request and reduces app size. Add back when the backend contract supports it.
 
 class AttendanceState {
   const AttendanceState({
@@ -75,7 +78,8 @@ class AttendanceNotifier extends AsyncNotifier<AttendanceState> {
   }
 
   Future<void> refresh() async {
-    state = AsyncValue.data((state.valueOrNull ?? const AttendanceState()).copyWith(loading: true));
+    state = AsyncValue.data(
+        (state.valueOrNull ?? const AttendanceState()).copyWith(loading: true));
     try {
       final datasource = ref.read(attendanceDatasourceProvider);
       final statuses = await datasource.getStatus();
@@ -87,14 +91,16 @@ class AttendanceNotifier extends AsyncNotifier<AttendanceState> {
       ));
     } catch (e) {
       state = AsyncValue.data(
-        (state.valueOrNull ?? const AttendanceState()).copyWith(loading: false, error: _msg(e)),
+        (state.valueOrNull ?? const AttendanceState())
+            .copyWith(loading: false, error: _msg(e)),
       );
     }
   }
 
   Future<void> loadHistory({DateTime? from, DateTime? to}) async {
     final current = state.valueOrNull ?? const AttendanceState();
-    state = AsyncValue.data(current.copyWith(loading: true, clearError: true));
+    state =
+        AsyncValue.data(current.copyWith(loading: true, clearError: true));
     try {
       final datasource = ref.read(attendanceDatasourceProvider);
       final auth = ref.read(authProvider).valueOrNull;
@@ -105,91 +111,70 @@ class AttendanceNotifier extends AsyncNotifier<AttendanceState> {
         from: from,
         to: to,
       );
-      state = AsyncValue.data(current.copyWith(history: sessions, loading: false));
+      state =
+          AsyncValue.data(current.copyWith(history: sessions, loading: false));
     } catch (e) {
-      state = AsyncValue.data(current.copyWith(loading: false, error: _msg(e)));
+      state =
+          AsyncValue.data(current.copyWith(loading: false, error: _msg(e)));
     }
   }
 
   Future<bool> clockIn() async {
     final current = state.valueOrNull ?? const AttendanceState();
 
-    // Double-clock-in guard
     if (current.isClockedIn) {
-      state = AsyncValue.data(current.copyWith(error: 'Ya tienes una sesión activa.'));
+      state = AsyncValue.data(
+          current.copyWith(error: 'Ya tienes una sesión activa.'));
       return false;
     }
 
-    state = AsyncValue.data(current.copyWith(actionLoading: true, clearError: true));
+    state = AsyncValue.data(
+        current.copyWith(actionLoading: true, clearError: true));
     try {
-      final location = await _getLocation();
       final datasource = ref.read(attendanceDatasourceProvider);
-      await datasource.clockIn(
-        lat: location?.latitude,
-        lng: location?.longitude,
-        accuracy: location?.accuracy,
-      );
+      await datasource.clockIn();
       await refresh();
       return true;
     } catch (e) {
-      state = AsyncValue.data(current.copyWith(actionLoading: false, error: _msg(e)));
+      state = AsyncValue.data(
+          current.copyWith(actionLoading: false, error: _msg(e)));
       return false;
     }
-  }
-
-  AttendanceStatusModel? _resolveMyStatus(List<AttendanceStatusModel> statuses) {
-    if (statuses.isEmpty) return null;
-    final userId = ref.read(authProvider).valueOrNull?.session?.userEntity.id;
-    if (userId == null) return statuses.first;
-    for (final status in statuses) {
-      if (status.userId == userId) return status;
-    }
-    return statuses.first;
   }
 
   Future<bool> clockOut({String? notes, String? incidentType}) async {
     final current = state.valueOrNull ?? const AttendanceState();
 
     if (!current.isClockedIn) {
-      state = AsyncValue.data(current.copyWith(error: 'No tienes ninguna sesión activa.'));
+      state = AsyncValue.data(
+          current.copyWith(error: 'No tienes ninguna sesión activa.'));
       return false;
     }
 
-    state = AsyncValue.data(current.copyWith(actionLoading: true, clearError: true));
+    state = AsyncValue.data(
+        current.copyWith(actionLoading: true, clearError: true));
     try {
-      final location = await _getLocation();
       final datasource = ref.read(attendanceDatasourceProvider);
-      await datasource.clockOut(
-        notes: notes,
-        incidentType: incidentType,
-        lat: location?.latitude,
-        lng: location?.longitude,
-        accuracy: location?.accuracy,
-      );
+      await datasource.clockOut(notes: notes, incidentType: incidentType);
       await refresh();
       return true;
     } catch (e) {
-      state = AsyncValue.data(current.copyWith(actionLoading: false, error: _msg(e)));
+      state = AsyncValue.data(
+          current.copyWith(actionLoading: false, error: _msg(e)));
       return false;
     }
   }
 
-  Future<Position?> _getLocation() async {
-    try {
-      var permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission();
-      }
-      if (permission == LocationPermission.denied ||
-          permission == LocationPermission.deniedForever) {
-        return null; // Non-blocking: continue without location
-      }
-      return await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
-      ).timeout(const Duration(seconds: 8));
-    } catch (_) {
-      return null;
+  AttendanceStatusModel? _resolveMyStatus(
+      List<AttendanceStatusModel> statuses) {
+    if (statuses.isEmpty) return null;
+    final userId =
+        ref.read(authProvider).valueOrNull?.session?.userEntity.id;
+    if (userId == null) return statuses.first;
+    for (final status in statuses) {
+      if (status.userId == userId) return status;
     }
+    return statuses.first;
   }
 
   String _msg(Object e) {
@@ -198,6 +183,7 @@ class AttendanceNotifier extends AsyncNotifier<AttendanceState> {
   }
 }
 
-final attendanceProvider = AsyncNotifierProvider<AttendanceNotifier, AttendanceState>(
+final attendanceProvider =
+    AsyncNotifierProvider<AttendanceNotifier, AttendanceState>(
   AttendanceNotifier.new,
 );

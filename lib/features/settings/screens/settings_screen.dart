@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 
+import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../shared/extensions/context_extensions.dart';
@@ -88,9 +90,18 @@ class SettingsScreen extends ConsumerWidget {
                     _SettingsTile(
                       icon: Icons.privacy_tip_outlined,
                       title: 'Política de privacidad',
-                      subtitle: 'Información legal',
+                      subtitle: 'Cómo tratamos tus datos',
                       color: AppColors.cobalt,
-                      onTap: () {},
+                      onTap: () => _launchUrl(
+                          context, AppConstants.privacyPolicyUrl),
+                    ),
+                    _SettingsTile(
+                      icon: Icons.gavel_rounded,
+                      title: 'Términos de servicio',
+                      subtitle: 'Condiciones de uso de ClockLy',
+                      color: AppColors.cobalt,
+                      onTap: () => _launchUrl(
+                          context, AppConstants.termsOfServiceUrl),
                     ),
                     const SizedBox(height: AppSpacing.x2),
                     _SettingsTile(
@@ -119,6 +130,21 @@ class SettingsScreen extends ConsumerWidget {
         ),
       ),
     );
+  }
+}
+
+Future<void> _launchUrl(BuildContext context, String url) async {
+  final uri = Uri.tryParse(url);
+  if (uri == null) return;
+  if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('No se pudo abrir el enlace: $url'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
   }
 }
 

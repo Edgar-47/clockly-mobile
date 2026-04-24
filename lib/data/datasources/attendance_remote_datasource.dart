@@ -16,13 +16,10 @@ class AttendanceRemoteDatasource {
         .toList();
   }
 
-  Future<AttendanceSessionModel> clockIn({
-    double? lat,
-    double? lng,
-    double? accuracy,
-  }) async {
-    // Backend ClockRequest only accepts: employee_id, exit_note, incident_type
-    // Location fields are not in the schema — omit them to avoid 400
+  // GPS/location params removed from clockIn and clockOut.
+  // Backend schema does not include location fields. If added in the future,
+  // re-introduce geolocator, declare permissions, and add lat/lng to the body.
+  Future<AttendanceSessionModel> clockIn() async {
     final data = await _client.post(ApiConstants.attendanceClockIn, body: {})
         as Map<String, dynamic>;
     // Backend wraps session: {"session": {...}}
@@ -33,13 +30,10 @@ class AttendanceRemoteDatasource {
   Future<AttendanceSessionModel> clockOut({
     String? notes,
     String? incidentType,
-    double? lat,
-    double? lng,
-    double? accuracy,
   }) async {
     final body = <String, dynamic>{
       if (notes != null && notes.isNotEmpty) 'exit_note': notes,
-      if (incidentType != null) 'incident_type': incidentType,
+      if (incidentType != null && incidentType.isNotEmpty) 'incident_type': incidentType,
     };
     final data = await _client.post(ApiConstants.attendanceClockOut, body: body)
         as Map<String, dynamic>;

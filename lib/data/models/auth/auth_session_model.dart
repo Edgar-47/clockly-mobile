@@ -47,4 +47,27 @@ class AuthSessionModel {
       );
 
   bool hasPermission(String permission) => permissions.contains(permission);
+
+  bool get isAdmin => activeBusinessRole == 'admin' || activeBusinessRole == 'superadmin';
+  bool get isManagerOrAbove =>
+      activeBusinessRole == 'admin' ||
+      activeBusinessRole == 'superadmin' ||
+      activeBusinessRole == 'manager';
+
+  AuthSessionModel copyWith({
+    String? accessToken,
+    UserModel? user,
+    List<BusinessModel>? businesses,
+    List<String>? permissions,
+    String? activeBusinessId,
+    String? activeBusinessRole,
+  }) =>
+      AuthSessionModel(
+        accessToken: accessToken ?? this.accessToken,
+        user: user ?? this.user,
+        businesses: businesses ?? this.businesses,
+        permissions: permissions ?? this.permissions,
+        activeBusinessId: activeBusinessId ?? this.activeBusinessId,
+        activeBusinessRole: activeBusinessRole ?? this.activeBusinessRole,
+      );
 }

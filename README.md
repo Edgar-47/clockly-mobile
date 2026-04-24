@@ -1,4 +1,4 @@
-# ClockLy Mobile
+/# ClockLy Mobile
 
 Flutter mobile app for ClockLy. This app does not connect to the database
 directly; it consumes the ClockLy Platform API under `/api/v1`.

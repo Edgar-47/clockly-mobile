@@ -4,10 +4,14 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/constants/app_constants.dart';
+import '../../../core/errors/app_exceptions.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/date_utils.dart';
+import '../../../providers/app_providers.dart';
 import '../../../shared/widgets/brand_logo.dart';
 import '../../attendance/providers/attendance_provider.dart';
+import '../../auth/providers/auth_provider.dart';
 
 class KioskScreen extends ConsumerStatefulWidget {
   const KioskScreen({super.key});
@@ -18,12 +22,17 @@ class KioskScreen extends ConsumerStatefulWidget {
 
 class _KioskScreenState extends ConsumerState<KioskScreen> {
   Timer? _clockTicker;
+  Timer? _inactivityTimer;
   DateTime _now = DateTime.now();
   String _pin = '';
   bool _showPinEntry = false;
   bool _actionLoading = false;
   String? _message;
   bool _messageIsError = false;
+
+  // Client-side lockout after repeated PIN failures
+  int _failedAttempts = 0;
+  DateTime? _lockedUntil;
 
   @override
   void initState() {
@@ -41,49 +50,163 @@ class _KioskScreenState extends ConsumerState<KioskScreen> {
   @override
   void dispose() {
     _clockTicker?.cancel();
+    _inactivityTimer?.cancel();
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     SystemChrome.setPreferredOrientations(DeviceOrientation.values);
     super.dispose();
   }
 
+  void _resetInactivityTimer() {
+    _inactivityTimer?.cancel();
+    _inactivityTimer = Timer(AppConstants.kioskInactivityTimeout, () {
+      if (mounted && _showPinEntry) {
+        setState(() {
+          _showPinEntry = false;
+          _pin = '';
+        });
+      }
+    });
+  }
+
+  void _showPinPanel() {
+    setState(() {
+      _showPinEntry = true;
+      _pin = '';
+    });
+    _resetInactivityTimer();
+  }
+
+  void _hidePinPanel() {
+    _inactivityTimer?.cancel();
+    setState(() {
+      _showPinEntry = false;
+      _pin = '';
+    });
+  }
+
   void _onPinDigit(String digit) {
-    if (_pin.length >= 4) return;
+    if (_pin.length >= AppConstants.kioskPinLength) return;
+    _resetInactivityTimer();
     setState(() => _pin += digit);
-    if (_pin.length == 4) {
+    if (_pin.length == AppConstants.kioskPinLength) {
       _processPin();
     }
   }
 
   void _onPinDelete() {
     if (_pin.isEmpty) return;
+    _resetInactivityTimer();
     setState(() => _pin = _pin.substring(0, _pin.length - 1));
   }
 
-  Future<void> _processPin() async {
-    setState(() => _actionLoading = true);
-    // Simulate PIN validation: any 4-digit PIN triggers clock action
-    await Future.delayed(const Duration(milliseconds: 600));
-    final attendance = ref.read(attendanceProvider).valueOrNull;
-    final isClockedIn = attendance?.isClockedIn ?? false;
+  bool get _isLockedOut {
+    final until = _lockedUntil;
+    if (until == null) return false;
+    return DateTime.now().isBefore(until);
+  }
 
-    bool ok;
-    if (isClockedIn) {
-      ok = await ref.read(attendanceProvider.notifier).clockOut();
-    } else {
-      ok = await ref.read(attendanceProvider.notifier).clockIn();
+  String get _lockoutMessage {
+    final until = _lockedUntil;
+    if (until == null) return '';
+    final remaining = until.difference(DateTime.now()).inSeconds;
+    return 'Demasiados intentos. Espera ${remaining}s.';
+  }
+
+  Future<void> _processPin() async {
+    if (_isLockedOut) {
+      setState(() {
+        _pin = '';
+        _message = _lockoutMessage;
+        _messageIsError = true;
+      });
+      return;
     }
 
-    if (mounted) {
-      setState(() {
-        _actionLoading = false;
-        _pin = '';
-        _showPinEntry = false;
-        _message = ok
-            ? (isClockedIn ? 'Salida registrada' : 'Entrada registrada')
-            : 'Error al registrar';
-        _messageIsError = !ok;
-      });
-      Future.delayed(const Duration(seconds: 3), () {
+    setState(() => _actionLoading = true);
+
+    final auth = ref.read(authProvider).valueOrNull;
+    final businessId = auth?.session?.activeBusinessId ?? '';
+
+    try {
+      // Validate PIN against backend. This is fail-closed: if the endpoint
+      // is not yet deployed (404), the operation is blocked — not bypassed.
+      final datasource = ref.read(kioskDatasourceProvider);
+      await datasource.validatePin(pin: _pin, businessId: businessId);
+
+      // PIN validated — proceed with clock action
+      final attendance = ref.read(attendanceProvider).valueOrNull;
+      final isClockedIn = attendance?.isClockedIn ?? false;
+      final bool ok;
+      if (isClockedIn) {
+        ok = await ref.read(attendanceProvider.notifier).clockOut();
+      } else {
+        ok = await ref.read(attendanceProvider.notifier).clockIn();
+      }
+
+      if (mounted) {
+        _failedAttempts = 0;
+        _lockedUntil = null;
+        setState(() {
+          _actionLoading = false;
+          _pin = '';
+          _showPinEntry = false;
+          _inactivityTimer?.cancel();
+          _message = ok
+              ? (isClockedIn ? 'Salida registrada' : 'Entrada registrada')
+              : 'Error al registrar. Inténtalo de nuevo.';
+          _messageIsError = !ok;
+        });
+      }
+    } on ValidationException {
+      // PIN rejected by backend
+      _failedAttempts++;
+      if (_failedAttempts >= AppConstants.kioskMaxFailedAttempts) {
+        _lockedUntil =
+            DateTime.now().add(AppConstants.kioskLockoutDuration);
+        _failedAttempts = 0;
+      }
+      if (mounted) {
+        setState(() {
+          _actionLoading = false;
+          _pin = '';
+          _message = _isLockedOut
+              ? _lockoutMessage
+              : 'PIN incorrecto. ${AppConstants.kioskMaxFailedAttempts - _failedAttempts} intentos restantes.';
+          _messageIsError = true;
+        });
+        _resetInactivityTimer();
+      }
+    } on NotFoundException {
+      // Backend endpoint not deployed yet — fail closed, do NOT allow clock action
+      if (mounted) {
+        setState(() {
+          _actionLoading = false;
+          _pin = '';
+          _showPinEntry = false;
+          _inactivityTimer?.cancel();
+          _message =
+              'El modo kiosko requiere configuración en el servidor. Contacta con soporte.';
+          _messageIsError = true;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        final msg = e is AppException
+            ? e.userMessage
+            : 'Error de conexión. Inténtalo de nuevo.';
+        setState(() {
+          _actionLoading = false;
+          _pin = '';
+          _message = msg;
+          _messageIsError = true;
+        });
+        _resetInactivityTimer();
+      }
+    }
+
+    // Auto-clear message after 4 seconds
+    if (mounted && _message != null) {
+      Future.delayed(const Duration(seconds: 4), () {
         if (mounted) setState(() => _message = null);
       });
     }
@@ -98,7 +221,6 @@ class _KioskScreenState extends ConsumerState<KioskScreen> {
       backgroundColor: AppColors.neutral900,
       body: Stack(
         children: [
-          // Background gradient
           Container(
             decoration: const BoxDecoration(
               gradient: LinearGradient(
@@ -108,28 +230,23 @@ class _KioskScreenState extends ConsumerState<KioskScreen> {
               ),
             ),
           ),
-
-          // Main content
           SafeArea(
             child: _showPinEntry
                 ? _PinEntry(
                     pin: _pin,
                     loading: _actionLoading,
+                    lockedOut: _isLockedOut,
+                    lockoutMessage: _isLockedOut ? _lockoutMessage : null,
                     onDigit: _onPinDigit,
                     onDelete: _onPinDelete,
-                    onCancel: () =>
-                        setState(() {
-                          _showPinEntry = false;
-                          _pin = '';
-                        }),
+                    onCancel: _hidePinPanel,
                   )
                 : _KioskIdle(
                     now: _now,
                     isClockedIn: isClockedIn,
                     message: _message,
                     messageIsError: _messageIsError,
-                    onAction: () =>
-                        setState(() => _showPinEntry = true),
+                    onAction: _showPinPanel,
                     onExit: () => context.pop(),
                   ),
           ),
@@ -138,6 +255,8 @@ class _KioskScreenState extends ConsumerState<KioskScreen> {
     );
   }
 }
+
+// ---------------------------------------------------------------------------
 
 class _KioskIdle extends StatelessWidget {
   const _KioskIdle({
@@ -159,7 +278,8 @@ class _KioskIdle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final actionColor = isClockedIn ? AppColors.error : AppColors.success;
-    final actionLabel = isClockedIn ? 'Registrar Salida' : 'Registrar Entrada';
+    final actionLabel =
+        isClockedIn ? 'Registrar Salida' : 'Registrar Entrada';
 
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -171,7 +291,6 @@ class _KioskIdle extends StatelessWidget {
           inverse: true,
         ),
         const SizedBox(height: 32),
-        // Clock
         Text(
           AppDateUtils.formatTime(now),
           style: const TextStyle(
@@ -190,13 +309,12 @@ class _KioskIdle extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 64),
-
-        // Message
         if (message != null)
           AnimatedContainer(
             duration: const Duration(milliseconds: 200),
             margin: const EdgeInsets.only(bottom: 24),
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+            padding:
+                const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
             decoration: BoxDecoration(
               color: messageIsError
                   ? AppColors.error.withValues(alpha: 0.2)
@@ -217,8 +335,6 @@ class _KioskIdle extends StatelessWidget {
               ),
             ),
           ),
-
-        // Action button
         GestureDetector(
           onTap: onAction,
           child: Container(
@@ -247,7 +363,6 @@ class _KioskIdle extends StatelessWidget {
             ),
           ),
         ),
-
         const SizedBox(height: 40),
         TextButton(
           onPressed: onExit,
@@ -259,17 +374,23 @@ class _KioskIdle extends StatelessWidget {
   }
 }
 
+// ---------------------------------------------------------------------------
+
 class _PinEntry extends StatelessWidget {
   const _PinEntry({
     required this.pin,
     required this.loading,
+    required this.lockedOut,
     required this.onDigit,
     required this.onDelete,
     required this.onCancel,
+    this.lockoutMessage,
   });
 
   final String pin;
   final bool loading;
+  final bool lockedOut;
+  final String? lockoutMessage;
   final void Function(String) onDigit;
   final VoidCallback onDelete;
   final VoidCallback onCancel;
@@ -282,17 +403,30 @@ class _PinEntry extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Text('Introduce tu PIN',
-                style: TextStyle(
-                    color: Colors.white70,
-                    fontSize: 20,
-                    fontWeight: FontWeight.w300)),
+            Text(
+              lockedOut ? 'Acceso bloqueado' : 'Introduce tu PIN',
+              style: TextStyle(
+                color: lockedOut ? AppColors.error : Colors.white70,
+                fontSize: 20,
+                fontWeight: FontWeight.w300,
+              ),
+            ),
+            if (lockoutMessage != null) ...[
+              const SizedBox(height: 8),
+              Text(
+                lockoutMessage!,
+                style: const TextStyle(
+                    color: AppColors.error,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600),
+                textAlign: TextAlign.center,
+              ),
+            ],
             const SizedBox(height: 32),
-            // Dots
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: List.generate(
-                4,
+                AppConstants.kioskPinLength,
                 (i) => Container(
                   margin: const EdgeInsets.symmetric(horizontal: 8),
                   width: 14,
@@ -305,12 +439,10 @@ class _PinEntry extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 40),
-
             if (loading)
               const CircularProgressIndicator(color: Colors.white)
-            else
+            else if (!lockedOut)
               _NumPad(onDigit: onDigit, onDelete: onDelete),
-
             const SizedBox(height: 20),
             TextButton(
               onPressed: onCancel,
@@ -323,6 +455,8 @@ class _PinEntry extends StatelessWidget {
     );
   }
 }
+
+// ---------------------------------------------------------------------------
 
 class _NumPad extends StatelessWidget {
   const _NumPad({required this.onDigit, required this.onDelete});
